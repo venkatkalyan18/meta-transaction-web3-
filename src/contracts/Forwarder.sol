@@ -15,21 +15,23 @@ contract Forwarder {
         bytes data;
     }
 
-    address public immutable i_relayer; 
+    address public immutable i_relayer;
 
-    constructor(address relayer){
+    constructor(address relayer) {
         i_relayer = relayer;
     }
 
     mapping(address => uint256) nonces;
 
-    function verify(ForwardRequest memory req, bytes memory sig) public view returns (bool) {
-
+    function verify(
+        ForwardRequest memory req,
+        bytes memory sig
+    ) public view returns (bool) {
         bytes32 hashedMessage = keccak256(
             abi.encodePacked(req.to, req.from, req.value, req.nonce, req.data)
         );
 
-        address signer = hashedMessage.recover(sig);
+        address signer = hashedMessage.getSignerMessage().recover(sig);
         return (nonces[req.from] == req.nonce && req.from == signer);
     }
 
@@ -43,16 +45,15 @@ contract Forwarder {
         nonces[forwardRequest.from] += 1;
 
         (isSuccess, ) = forwardRequest.to.call(
-            abi.encodePacked(forwardRequest.data,forwardRequest.from)
+            abi.encodePacked(forwardRequest.data, forwardRequest.from)
         );
-
     }
 
-    function getNonce(address add) view external returns(uint256 nonce){
+    function getNonce(address add) external view returns (uint256 nonce) {
         nonce = nonces[add];
-    } 
+    }
 
-    function getRelayerAddress() view external returns(address){
+    function getRelayerAddress() external view returns (address) {
         return i_relayer;
     }
 }
